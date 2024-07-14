@@ -39,17 +39,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Format Platform String
-        id: format_platform
-        run: echo "FORMATTED_PLATFORM=${{ github.event.inputs.platforms }}" | sed 's/\//-/g' >> $GITHUB_ENV
-
       - name: Publish Docker Image (Kali)
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./docker/Dockerfile
           platforms: ${{ github.event.inputs.platforms }}
-          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-${{ env.FORMATTED_PLATFORM }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms | replace('/', '-') }}
           push: true
 
   on-success-update-chart:
@@ -66,7 +62,7 @@ jobs:
 
       - name: Update Helm Chart Values Image Tag
         run: |
-          sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-${{ env.FORMATTED_PLATFORM }}/" values.yaml
+          sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms | replace('/', '-') }}/" values.yaml
 
       - name: Commit and Push Changes
         run: |
