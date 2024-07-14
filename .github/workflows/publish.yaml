@@ -69,10 +69,11 @@ jobs:
           echo "After sed command:"
           cat values.yaml
 
-      - name: Configure Git
-        run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "GitHub Action"
+      - name: Configure Git User Email
+        run: git config --global user.email "action@github.com"
+
+      - name: Configure Git User Name
+        run: git config --global user.name "GitHub Action"
 
       - name: Add Changes
         run: git add values.yaml
@@ -80,10 +81,13 @@ jobs:
       - name: Check Git Status
         run: git status
 
-      - name: Commit and Push Changes
+      - name: Commit Changes
         run: |
-          if ! git diff --cached --quiet; then
-            git commit -m "Update image tag with latest Git SHA"
-            git push
-          else
-            echo "No changes to commit"
+          git diff --cached --quiet || git commit -m "Update image tag with latest Git SHA"
+
+      - name: Push Changes
+        run: git push
+
+      - name: No Changes to Commit
+        if: failure()
+        run: echo "No changes to commit"
