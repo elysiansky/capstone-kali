@@ -9,7 +9,7 @@ on:
       platforms:
         description: 'Platforms'
         required: true
-        default: 'linux/amd64'
+        default: 'linux-amd64'
       git_sha:
         description: 'Git SHA'
         required: true
@@ -45,7 +45,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           platforms: ${{ github.event.inputs.platforms }}
-          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-linux-amd64
+          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms | replace('/', '-') }}
           push: true
 
   on-success-update-chart:
@@ -62,7 +62,7 @@ jobs:
 
       - name: Update Helm Chart Values Image Tag
         run: |
-          sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-linux-amd64/" values.yaml
+          sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms | replace('/', '-') }}/" values.yaml
 
       - name: Commit and Push Changes
         run: |
@@ -86,4 +86,3 @@ jobs:
           error_output_push: ${{ needs.on-success-push.outputs.error_output_push }}
           error_message_update_chart: ${{ needs.on-success-update-chart.outputs.error_message_update_chart }}
           error_output_update_chart: ${{ needs.on-success-update-chart.outputs.error_output_update_chart }}
-
