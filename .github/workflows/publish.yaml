@@ -65,7 +65,7 @@ jobs:
 
       - name: Update Helm Chart Values Image Tag
         run: |
-          sed -i "s/\(tag: \).*/\1${{ github.event.inputs.git_sha }}-linux-amd64/" values.yaml
+          sed -i "s/tag: .*/tag: ${{ github.event.inputs.git_sha }}-linux-amd64/" values.yaml
           echo "After sed command:"
           cat values.yaml
 
@@ -80,4 +80,3 @@ jobs:
             git push
           else
             echo "No changes to commit"
-
