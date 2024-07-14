@@ -9,7 +9,7 @@ on:
       platforms:
         description: 'Platforms'
         required: true
-        default: 'linux/amd64'
+        default: 'linux-amd64'
       git_sha:
         description: 'Git SHA'
         required: true
