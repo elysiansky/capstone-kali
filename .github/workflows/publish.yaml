@@ -76,6 +76,9 @@ jobs:
     needs: on-success-update-chart
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
       - name: Notify Discord
         uses: ./.github/workflows/notify.yaml
         with:
