@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ["Build Docker Images"]
     types: [completed]
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  workflow_dispatch:
     inputs:
       platforms:
         description: 'Platforms'
@@ -22,8 +22,8 @@ jobs:
     steps:
       - name: Debug Outputs
         run: |
-          echo "Platforms: ${{ inputs.platforms }}"
-          echo "Git SHA: ${{ inputs.git_sha }}"
+          echo "Platforms: ${{ github.event.inputs.platforms }}"
+          echo "Git SHA: ${{ github.event.inputs.git_sha }}"
 
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -39,13 +39,9 @@ jobs:
         with:
           context: .
           file: ./docker/Dockerfile
-          platforms: ${{ inputs.platforms }}
-          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ inputs.git_sha }}-${{ inputs.platforms }}
+          platforms: ${{ github.event.inputs.platforms }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms }}
           push: true
-
-    outputs:
-      error_message_push: ${{ steps.capture_error.outputs.ERROR_MESSAGE }}
-      error_output_push: ${{ steps.capture_error.outputs.ERROR_OUTPUT }}
 
   on-success-update-chart:
     runs-on: ubuntu-latest
@@ -56,13 +52,12 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: elysiansky/capstone-chart-vulnerable-kali
-          ref: main  # Or use the branch/tag you want to update
+          ref: main
           token: ${{ secrets.HELM_CHART_PERSONAL_ACCESS_TOKEN }}
 
       - name: Update Helm Chart Values Image Tag
         run: |
-          tr -d ' " ' < values.yaml | sed -i "s/tag:.*/tag: ${{ inputs.git_sha }}-${{ inputs.platforms }}/g" ${{ github.workspace }}/values.yaml
-        working-directory: ${{ github.workspace }}
+          sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms }}/" values.yaml
 
       - name: Commit and Push Changes
         run: |
@@ -71,9 +66,6 @@ jobs:
           git add .
           git commit -m "Update image tag with latest Git SHA"
           git push
-    outputs:
-      error_message_update_chart: ${{ steps.capture_error.outputs.ERROR_MESSAGE }}
-      error_output_update_chart: ${{ steps.capture_error.outputs.ERROR_OUTPUT }}
 
   on-success-notify-discord:
     needs: on-success-update-chart
