@@ -99,11 +99,11 @@ jobs:
 
       - name: Send Notification to Discord
         run: |
-          if [ -z "${{ secrets.DISCORD_WEBHOOK }}" ]; then
-            echo "DISCORD_WEBHOOK is not set"
+          if [ -z "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
+            echo "DISCORD_WEBHOOK_URL is not set"
             exit 1
           else
             curl -H "Content-Type: application/json" \
               -d "{\"content\": \"Build succeeded for platforms: ${{ github.event.inputs.platforms }} with Git SHA: ${{ github.event.inputs.git_sha }}\"}" \
-              ${{ secrets.DISCORD_WEBHOOK }}
+              ${{ secrets.DISCORD_WEBHOOK_URL }}
           fi
