@@ -60,7 +60,7 @@ jobs:
       - name: Checkout Helm Chart Repository
         uses: actions/checkout@v2
         with:
-          repository: elysiansky/capstone-chart-vulnerable-kali
+          repository: elysiansky/capstone-chart-kali
           ref: main
           token: ${{ secrets.HELM_CHART_PERSONAL_ACCESS_TOKEN }}
 
