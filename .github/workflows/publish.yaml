@@ -74,13 +74,15 @@ jobs:
 
   on-success-notify-discord:
     needs: on-success-update-chart
-    uses: ./.github/workflows/notify.yaml
-    secrets: inherit
-    with:
-      pipeline: "Capstone Vulnerable Kali"
-      status_on_success_push: ${{ needs.on-success-push.result }}
-      status_on_success_update_chart: ${{ needs.on-success-update-chart.result }}
-      error_message_push: ${{ needs.on-success-push.outputs.error_message_push }}
-      error_output_push: ${{ needs.on-success-push.outputs.error_output_push }}
-      error_message_update_chart: ${{ needs.on-success-update-chart.outputs.error_message_update_chart }}
-      error_output_update_chart: ${{ needs.on-success-update-chart.outputs.error_output_update_chart }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord
+        uses: ./.github/workflows/notify.yaml
+        with:
+          pipeline: "Capstone Vulnerable Kali"
+          status_on_success_push: ${{ needs.on-success-push.result }}
+          status_on_success_update_chart: ${{ needs.on-success-update-chart.result }}
+          error_message_push: ${{ needs.on-success-push.outputs.error_message_push }}
+          error_output_push: ${{ needs.on-success-push.outputs.error_output_push }}
+          error_message_update_chart: ${{ needs.on-success-update-chart.outputs.error_message_update_chart }}
+          error_output_update_chart: ${{ needs.on-success-update-chart.outputs.error_output_update_chart }}
