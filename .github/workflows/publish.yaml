@@ -66,9 +66,7 @@ jobs:
       - name: Update Helm Chart Values Image Tag
         run: |
           sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-linux-amd64/" values.yaml
-
-      - name: Debug values.yaml After Update
-        run: cat values.yaml
+          cat values.yaml
 
       - name: Commit and Push Changes
         run: |
