@@ -21,19 +21,14 @@ jobs:
           if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
             echo "DOCKER_USERNAME is not set"
             exit 1
-          else
-            echo "DOCKER_USERNAME is set"
           fi
           if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
             echo "DOCKER_PASSWORD is not set"
             exit 1
-          else
-            echo "DOCKER_PASSWORD is set"
           fi
 
       - name: Log in to DockerHub
-        run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Set Tag
         id: set_tag
@@ -52,8 +47,6 @@ jobs:
           if [ -z "${{ secrets.DISCORD_WEBHOOK }}" ]; then
             echo "DISCORD_WEBHOOK is not set"
             exit 1
-          else
-            echo "DISCORD_WEBHOOK is set"
           fi
 
       - name: Notify on Success
@@ -61,7 +54,7 @@ jobs:
         run: |
           echo "Sending success notification to Discord"
           curl -H "Content-Type: application/json" \
-          -d "{\"content\": \"Build succeeded for platforms with Git SHA\"}" \
+          -d "{\"content\": \"Build succeeded for platforms with Git SHA: ${{ github.sha }}\"}" \
           ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Notify on Failure
@@ -69,6 +62,5 @@ jobs:
         run: |
           echo "Sending failure notification to Discord"
           curl -H "Content-Type: application/json" \
-          -d "{\"content\": \"Build failed for platforms with Git SHA\"}" \
+          -d "{\"content\": \"Build failed for platforms with Git SHA: ${{ github.sha }}\"}" \
           ${{ secrets.DISCORD_WEBHOOK }}
-
