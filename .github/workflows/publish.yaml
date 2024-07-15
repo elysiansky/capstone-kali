@@ -103,4 +103,3 @@ jobs:
           curl -H "Content-Type: application/json" \
           -d "{\"content\": \"Build succeeded for platforms: ${{ github.event.inputs.platforms }} with Git SHA: ${{ github.event.inputs.git_sha }}\"}" \
           ${{ secrets.DISCORD_WEBHOOK }}
-
