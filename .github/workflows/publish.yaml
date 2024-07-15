@@ -46,6 +46,10 @@ jobs:
       - name: Notify on Success
         if: ${{ success() }}
         run: |
+          if [ -z "${{ secrets.DISCORD_WEBHOOK }}" ]; then
+            echo "DISCORD_WEBHOOK is not set"
+            exit 1
+          fi
           curl -H "Content-Type: application/json" \
           -d "{\"content\": \"Build succeeded for platforms with Git SHA\"}" \
           ${{ secrets.DISCORD_WEBHOOK }}
@@ -53,6 +57,10 @@ jobs:
       - name: Notify on Failure
         if: ${{ failure() }}
         run: |
+          if [ -z "${{ secrets.DISCORD_WEBHOOK }}" ]; then
+            echo "DISCORD_WEBHOOK is not set"
+            exit 1
+          fi
           curl -H "Content-Type: application/json" \
           -d "{\"content\": \"Build failed for platforms with Git SHA\"}" \
           ${{ secrets.DISCORD_WEBHOOK }}
