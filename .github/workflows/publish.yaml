@@ -40,7 +40,7 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           platforms: ${{ github.event.inputs.platforms }}
-          #tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms | replace('/', '-') }}
           push: true
 
   on-success-update-chart:
@@ -57,7 +57,7 @@ jobs:
 
       - name: Update Helm Chart Values Image Tag
         run: |
-          sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms }}/" values.yaml
+          sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms | replace('/', '-') }}/" values.yaml
 
       - name: Commit and Push Changes
         run: |
