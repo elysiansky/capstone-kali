@@ -35,13 +35,11 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Publish Docker Image (Kali)
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./docker/Dockerfile
-          platforms: ${{ github.event.inputs.platforms }}
-          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms | replace('/', '-') }}
-          push: true
+        run: |
+          PLATFORM=$(echo "${{ github.event.inputs.platforms }}" | sed 's/\//-/g')
+          TAG="${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-${PLATFORM}"
+          echo "Building and pushing Docker image with tag: $TAG"
+          docker buildx build --file ./docker/Dockerfile --iidfile /tmp/docker-build-push-0RiyPx/iidfile --platform ${{ github.event.inputs.platforms }} --tag $TAG --metadata-file /tmp/docker-build-push-0RiyPx/metadata-file --push .
 
   on-success-update-chart:
     runs-on: ubuntu-latest
@@ -57,7 +55,8 @@ jobs:
 
       - name: Update Helm Chart Values Image Tag
         run: |
-          sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms | replace('/', '-') }}/" values.yaml
+          PLATFORM=$(echo "${{ github.event.inputs.platforms }}" | sed 's/\//-/g')
+          sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-${PLATFORM}/" values.yaml
 
       - name: Commit and Push Changes
         run: |
