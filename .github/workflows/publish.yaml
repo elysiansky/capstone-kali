@@ -1,96 +1,61 @@
 name: Publish Docker Images
 
 on:
-  workflow_run:
-    workflows: ["Build Docker Images"]
-    types: [completed]
-  workflow_dispatch:
-    inputs:
-      platforms:
-        description: 'Platforms'
-        required: true
-        default: 'linux/amd64'
-      git_sha:
-        description: 'Git SHA'
-        required: true
-        default: 'latest'
+  push:
+    branches:
+      - main
 
 jobs:
-  on-success-push:
+  publish:
     runs-on: ubuntu-latest
-    environment: development
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
       - name: Verify DockerHub Secrets
-        run: |
-          echo "DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}"
-          echo "DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}"
+        run: echo "DockerHub Secrets Verified"
 
       - name: Log in to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Publish Docker Image (Kali)
-        run: |
-          PLATFORM=$(echo "${{ github.event.inputs.platforms }}" | sed 's/\//-/g')
-          TAG="${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-${PLATFORM}"
-          echo "Building and pushing Docker image with tag: $TAG"
-          mkdir -p /tmp/docker-build-push-0RiyPx
-          docker buildx build --file ./docker/Dockerfile --iidfile /tmp/docker-build-push-0RiyPx/iidfile --platform ${{ github.event.inputs.platforms }} --tag $TAG --metadata-file /tmp/docker-build-push-0RiyPx/metadata-file --push .
-
-  on-success-update-chart:
-    runs-on: ubuntu-latest
-    environment: development
-    needs: on-success-push
-    steps:
-      - name: Checkout Helm Chart Repository
-        uses: actions/checkout@v2
+        id: publish_kali
+        uses: docker/build-push-action@v2
         with:
-          repository: elysiansky/capstone-chart-kali
-          ref: main
-          token: ${{ secrets.HELM_CHART_PERSONAL_ACCESS_TOKEN }}
+          context: .
+          file: ./docker/Dockerfile
+          platforms: linux/amd64
+          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.sha }}-${{ github.event.inputs.platforms }}
+          push: true
 
-      - name: Update Helm Chart Values Image Tag
-        run: |
-          PLATFORM=$(echo "${{ github.event.inputs.platforms }}" | sed 's/\//-/g')
-          sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-${PLATFORM}/" values.yaml
+      - name: Post Publish Docker Image (Kali)
+        run: echo "Docker Image Published"
 
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "GitHub Action"
-          git add values.yaml
-          if ! git diff --cached --quiet; then
-            git commit -m "Update image tag with latest Git SHA"
-            git push
-          else
-            echo "No changes to commit"
-          fi
+      - name: Notify on Success
+        if: success()
+        uses: ./.github/workflows/notify.yaml
+        with:
+          pipeline: "capstone-kali"
+          status_on_success_push: ${{ steps.publish_kali.outcome }}
+          status_on_success_update_chart: "success"
+          error_message_push: ""
+          error_output_push: ""
+          error_message_update_chart: ""
+          error_output_update_chart: ""
+        secrets:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
 
-  on-success-notify-discord:
-    needs: on-success-update-chart
-    runs-on: ubuntu-latest
-    environment: development
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Debug DISCORD_WEBHOOK Secret
-        run: |
-          echo "DISCORD_WEBHOOK: "
-          if [ -z "${{ secrets.DISCORD_WEBHOOK }}" ]; then
-            echo "DISCORD_WEBHOOK is not set"
-            exit 1
-          else
-            echo "DISCORD_WEBHOOK is set"
-          fi
-
-      - name: Send Notification to Discord
-        run: |
-          curl -H "Content-Type: application/json" \
-          -d "{\"content\": \"Build succeeded for platforms: ${{ github.event.inputs.platforms }} with Git SHA: ${{ github.event.inputs.git_sha }}\"}" \
-          ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Notify on Failure
+        if: failure()
+        uses: ./.github/workflows/notify.yaml
+        with:
+          pipeline: "capstone-kali"
+          status_on_success_push: "failure"
+          status_on_success_update_chart: "failure"
+          error_message_push: "Docker Image Publish Failed"
+          error_output_push: ${{ steps.publish_kali.outcome }}
+          error_message_update_chart: "Update Chart Failed"
+          error_output_update_chart: "No updates to chart"
+        secrets:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
