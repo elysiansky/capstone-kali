@@ -39,6 +39,7 @@ jobs:
           PLATFORM=$(echo "${{ github.event.inputs.platforms }}" | sed 's/\//-/g')
           TAG="${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-${PLATFORM}"
           echo "Building and pushing Docker image with tag: $TAG"
+          mkdir -p /tmp/docker-build-push-0RiyPx
           docker buildx build --file ./docker/Dockerfile --iidfile /tmp/docker-build-push-0RiyPx/iidfile --platform ${{ github.event.inputs.platforms }} --tag $TAG --metadata-file /tmp/docker-build-push-0RiyPx/metadata-file --push .
 
   on-success-update-chart:
