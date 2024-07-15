@@ -1,4 +1,5 @@
 name: notify-pipeline-status
+
 on:
   workflow_call:
     inputs:
@@ -23,10 +24,6 @@ on:
       error_output_update_chart:
         required: true
         type: string
-
-  workflow_run:
-    workflows: ["publish-docker-images"]
-    types: [completed]
 
 jobs:
   notify:
