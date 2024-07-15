@@ -7,8 +7,6 @@ on:
 
 permissions:
   contents: write
-  actions: write
-  workflows: write
 
 jobs:
   publish:
@@ -19,70 +17,53 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Verify DockerHub Secrets
-        run: echo "DockerHub Secrets Verified"
+        run: |
+          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
+            echo "DOCKER_USERNAME is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
+            echo "DOCKER_PASSWORD is not set"
+            exit 1
+          fi
 
       - name: Log in to DockerHub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Set Tag
-        id: vars
-        run: |
-          echo "TAG=${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.sha }}-$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+        id: set_tag
+        run: echo "::set-output name=tag::$(date +'%Y%m%d%H%M')"
 
       - name: Publish Docker Image (Kali)
-        id: publish_kali
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./docker/Dockerfile
-          platforms: linux/amd64
-          tags: ${{ env.TAG }}
           push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ steps.set_tag.outputs.tag }}
 
       - name: Notify on Success
-        if: success()
-        uses: actions/github-script@v3
+        uses: ./.github/workflows/notify.yaml
         with:
-          script: |
-            const inputs = {
-              pipeline: 'capstone-kali',
-              status_on_success_push: 'success',
-              status_on_success_update_chart: 'success',
-              error_message_push: '',
-              error_output_push: '',
-              error_message_update_chart: '',
-              error_output_update_chart: '',
-            };
-            github.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'notify.yaml',
-              ref: context.ref,
-              inputs
-            });
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          pipeline: "capstone-kali"
+          status_on_success_push: ${{ steps.publish.outcome }}
+          status_on_success_update_chart: "success"
+          error_message_push: ""
+          error_output_push: ""
+          error_message_update_chart: ""
+          error_output_update_chart: ""
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Notify on Failure
         if: failure()
-        uses: actions/github-script@v3
+        uses: ./.github/workflows/notify.yaml
         with:
-          script: |
-            const inputs = {
-              pipeline: 'capstone-kali',
-              status_on_success_push: 'failure',
-              status_on_success_update_chart: 'failure',
-              error_message_push: 'Publish Docker Image Failed',
-              error_output_push: `${{ steps.publish_kali.outcome }}`,
-              error_message_update_chart: '',
-              error_output_update_chart: '',
-            };
-            github.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'notify.yaml',
-              ref: context.ref,
-              inputs
-            });
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          pipeline: "capstone-kali"
+          status_on_success_push: "failure"
+          status_on_success_update_chart: "failure"
+          error_message_push: "Publish Docker Image Failed"
+          error_output_push: ${{ steps.publish.outcome }}
+          error_message_update_chart: ""
+          error_output_update_chart: ""
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
