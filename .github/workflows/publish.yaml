@@ -44,6 +44,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ steps.set_tag.outputs.tag }}
 
       - name: Notify on Success
+        if: ${{ success() }}
         uses: ./.github/workflows/notify.yaml
         with:
           pipeline: "capstone-kali"
@@ -56,7 +57,7 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Notify on Failure
-        if: failure()
+        if: ${{ failure() }}
         uses: ./.github/workflows/notify.yaml
         with:
           pipeline: "capstone-kali"
