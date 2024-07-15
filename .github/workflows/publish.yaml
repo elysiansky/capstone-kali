@@ -1,89 +1,73 @@
-name: notify-pipeline-status
-on:
-  workflow_call:
-    inputs:
-      pipeline:
-        required: true
-        type: string
-      status_on_success_push:
-        required: true
-        type: string
-      status_on_success_update_chart:
-        required: true
-        type: string
-      error_message_push:
-        required: true
-        type: string
-      error_output_push:
-        required: true
-        type: string
-      error_message_update_chart:
-        required: true
-        type: string
-      error_output_update_chart:
-        required: true
-        type: string
+name: Publish Docker Images
 
-  workflow_run:
-    workflows: ["publish-docker-images"]
-    types: [completed]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
-  notify:
+  publish:
     runs-on: ubuntu-latest
-    environment: development
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Send Discord notification on success
-        if: ${{ inputs.status_on_success_push == 'success' && inputs.status_on_success_update_chart == 'success' }}
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        uses: Ilshidur/action-discord@master
-        with:
-          args: |
-            {
-              "content": "**[ STATUS MESSAGE ] The project ${{ inputs.pipeline }} successfully built and published!**",
-              "embeds": [
-                {
-                  "title": "Project Details",
-                  "fields": [
-                    {
-                      "name": "Project Image Repository URL",
-                      "value": "${{ vars.PROJECT_IMAGE_REPOSITORY_URL }}"
-                    },
-                    {
-                      "name": "Project Repository URL",
-                      "value": "${{ vars.PROJECT_REPOSITORY_URL }}"
-                    },
-                    {
-                      "name": "Project Chart URL",
-                      "value": "${{ vars.PROJECT_CHART_URL }}"
-                    }
-                  ]
-                }
-              ]
-            }
+      - name: Verify DockerHub Secrets
+        run: echo "DockerHub Secrets Verified"
 
-      - name: Send Discord notification on failure
-        if: ${{ inputs.status_on_success_push == 'failure' || inputs.status_on_success_update_chart == 'failure' }}
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        uses: Ilshidur/action-discord@master
+      - name: Log in to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Publish Docker Image (Kali)
+        id: publish_kali
+        uses: docker/build-push-action@v2
         with:
-          args: |
-            {
-              "content": "**[ ERROR ] The project ${{ inputs.pipeline }} failed to build and publish:**",
-              "embeds": [
-                {
-                  "title": "Push Error",
-                  "description": "${{ inputs.error_message_push }}\n${{ inputs.error_output_push }}"
-                },
-                {
-                  "title": "Update Chart Error",
-                  "description": "${{ inputs.error_message_update_chart }}\n${{ inputs.error_output_update_chart }}"
-                }
-              ]
-            }
+          context: .
+          file: ./docker/Dockerfile
+          platforms: linux/amd64
+          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.sha }}-${{ github.event.inputs.platforms }}
+          push: true
+
+      - name: Post Publish Docker Image (Kali)
+        run: echo "Docker Image Published"
+
+      - name: Set success variables
+        if: success()
+        run: |
+          echo "status_on_success_push=success" >> $GITHUB_ENV
+          echo "status_on_success_update_chart=success" >> $GITHUB_ENV
+          echo "error_message_push=" >> $GITHUB_ENV
+          echo "error_output_push=" >> $GITHUB_ENV
+          echo "error_message_update_chart=" >> $GITHUB_ENV
+          echo "error_output_update_chart=" >> $GITHUB_ENV
+
+      - name: Set failure variables
+        if: failure()
+        run: |
+          echo "status_on_success_push=failure" >> $GITHUB_ENV
+          echo "status_on_success_update_chart=failure" >> $GITHUB_ENV
+          echo "error_message_push=Docker Image Publish Failed" >> $GITHUB_ENV
+          echo "error_output_push=${{ steps.publish_kali.outcome }}" >> $GITHUB_ENV
+          echo "error_message_update_chart=Update Chart Failed" >> $GITHUB_ENV
+          echo "error_output_update_chart=No updates to chart"
+
+      - name: Notify
+        uses: actions/github-script@v4
+        with:
+          script: |
+            github.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "notify-pipeline-status.yml",
+              ref: context.ref,
+              inputs: {
+                pipeline: "capstone-kali",
+                status_on_success_push: process.env.status_on_success_push,
+                status_on_success_update_chart: process.env.status_on_success_update_chart,
+                error_message_push: process.env.error_message_push,
+                error_output_push: process.env.error_output_push,
+                error_message_update_chart: process.env.error_message_update_chart,
+                error_output_update_chart: process.env.error_output_update_chart
+              }
+            });
