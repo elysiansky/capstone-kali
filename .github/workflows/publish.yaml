@@ -55,6 +55,8 @@ jobs:
               ref: context.ref,
               inputs
             });
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Notify on Failure
         if: failure()
@@ -77,3 +79,5 @@ jobs:
               ref: context.ref,
               inputs
             });
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
