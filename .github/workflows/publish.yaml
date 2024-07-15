@@ -1,61 +1,89 @@
-name: Publish Docker Images
-
+name: notify-pipeline-status
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      pipeline:
+        required: true
+        type: string
+      status_on_success_push:
+        required: true
+        type: string
+      status_on_success_update_chart:
+        required: true
+        type: string
+      error_message_push:
+        required: true
+        type: string
+      error_output_push:
+        required: true
+        type: string
+      error_message_update_chart:
+        required: true
+        type: string
+      error_output_update_chart:
+        required: true
+        type: string
+
+  workflow_run:
+    workflows: ["publish-docker-images"]
+    types: [completed]
 
 jobs:
-  publish:
+  notify:
     runs-on: ubuntu-latest
+    environment: development
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Verify DockerHub Secrets
-        run: echo "DockerHub Secrets Verified"
-
-      - name: Log in to DockerHub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-      - name: Publish Docker Image (Kali)
-        id: publish_kali
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./docker/Dockerfile
-          platforms: linux/amd64
-          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.sha }}-${{ github.event.inputs.platforms }}
-          push: true
-
-      - name: Post Publish Docker Image (Kali)
-        run: echo "Docker Image Published"
-
-      - name: Notify on Success
-        if: success()
-        uses: ./.github/workflows/notify.yaml
-        with:
-          pipeline: "capstone-kali"
-          status_on_success_push: ${{ steps.publish_kali.outcome }}
-          status_on_success_update_chart: "success"
-          error_message_push: ""
-          error_output_push: ""
-          error_message_update_chart: ""
-          error_output_update_chart: ""
-        secrets:
+      - name: Send Discord notification on success
+        if: ${{ inputs.status_on_success_push == 'success' && inputs.status_on_success_update_chart == 'success' }}
+        env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-
-      - name: Notify on Failure
-        if: failure()
-        uses: ./.github/workflows/notify.yaml
+        uses: Ilshidur/action-discord@master
         with:
-          pipeline: "capstone-kali"
-          status_on_success_push: "failure"
-          status_on_success_update_chart: "failure"
-          error_message_push: "Docker Image Publish Failed"
-          error_output_push: ${{ steps.publish_kali.outcome }}
-          error_message_update_chart: "Update Chart Failed"
-          error_output_update_chart: "No updates to chart"
-        secrets:
+          args: |
+            {
+              "content": "**[ STATUS MESSAGE ] The project ${{ inputs.pipeline }} successfully built and published!**",
+              "embeds": [
+                {
+                  "title": "Project Details",
+                  "fields": [
+                    {
+                      "name": "Project Image Repository URL",
+                      "value": "${{ vars.PROJECT_IMAGE_REPOSITORY_URL }}"
+                    },
+                    {
+                      "name": "Project Repository URL",
+                      "value": "${{ vars.PROJECT_REPOSITORY_URL }}"
+                    },
+                    {
+                      "name": "Project Chart URL",
+                      "value": "${{ vars.PROJECT_CHART_URL }}"
+                    }
+                  ]
+                }
+              ]
+            }
+
+      - name: Send Discord notification on failure
+        if: ${{ inputs.status_on_success_push == 'failure' || inputs.status_on_success_update_chart == 'failure' }}
+        env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: Ilshidur/action-discord@master
+        with:
+          args: |
+            {
+              "content": "**[ ERROR ] The project ${{ inputs.pipeline }} failed to build and publish:**",
+              "embeds": [
+                {
+                  "title": "Push Error",
+                  "description": "${{ inputs.error_message_push }}\n${{ inputs.error_output_push }}"
+                },
+                {
+                  "title": "Update Chart Error",
+                  "description": "${{ inputs.error_message_update_chart }}\n${{ inputs.error_output_update_chart }}"
+                }
+              ]
+            }
