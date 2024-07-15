@@ -45,26 +45,42 @@ jobs:
 
       - name: Notify on Success
         if: ${{ success() }}
-        uses: ./.github/workflows/notify.yaml
+        uses: actions/github-script@v3
         with:
-          pipeline: "capstone-kali"
-          status_on_success_push: ${{ steps.publish.outcome }}
-          status_on_success_update_chart: "success"
-          error_message_push: ""
-          error_output_push: ""
-          error_message_update_chart: ""
-          error_output_update_chart: ""
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'notify.yaml',
+              ref: context.ref,
+              inputs: {
+                pipeline: "capstone-kali",
+                status_on_success_push: "success",
+                status_on_success_update_chart: "success",
+                error_message_push: "",
+                error_output_push: "",
+                error_message_update_chart: "",
+                error_output_update_chart: "",
+              }
+            })
 
       - name: Notify on Failure
         if: ${{ failure() }}
-        uses: ./.github/workflows/notify.yaml
+        uses: actions/github-script@v3
         with:
-          pipeline: "capstone-kali"
-          status_on_success_push: "failure"
-          status_on_success_update_chart: "failure"
-          error_message_push: "Publish Docker Image Failed"
-          error_output_push: ${{ steps.publish.outcome }}
-          error_message_update_chart: ""
-          error_output_update_chart: ""
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'notify.yaml',
+              ref: context.ref,
+              inputs: {
+                pipeline: "capstone-kali",
+                status_on_success_push: "failure",
+                status_on_success_update_chart: "failure",
+                error_message_push: "Publish Docker Image Failed",
+                error_output_push: ${{ steps.publish.outcome }},
+                error_message_update_chart: "",
+                error_output_update_chart: "",
+              }
+            })
