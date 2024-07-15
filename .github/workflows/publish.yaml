@@ -32,42 +32,15 @@ jobs:
       - name: Post Publish Docker Image (Kali)
         run: echo "Docker Image Published"
 
-      - name: Set success variables
-        if: success()
+      - name: Notify
         run: |
-          echo "status_on_success_push=success" >> $GITHUB_ENV
-          echo "status_on_success_update_chart=success" >> $GITHUB_ENV
-          echo "error_message_push=" >> $GITHUB_ENV
-          echo "error_output_push=" >> $GITHUB_ENV
-          echo "error_message_update_chart=" >> $GITHUB_ENV
-          echo "error_output_update_chart=" >> $GITHUB_ENV
+          curl -H "Content-Type: application/json" \
+          -d "{\"content\": \"Build succeeded for platforms: ${{ github.event.inputs.platforms }} with Git SHA: ${{ github.sha }}\"}" \
+          ${{ secrets.DISCORD_WEBHOOK }}
 
-      - name: Set failure variables
+      - name: Notify on Failure
         if: failure()
         run: |
-          echo "status_on_success_push=failure" >> $GITHUB_ENV
-          echo "status_on_success_update_chart=failure" >> $GITHUB_ENV
-          echo "error_message_push=Docker Image Publish Failed" >> $GITHUB_ENV
-          echo "error_output_push=${{ steps.publish_kali.outcome }}" >> $GITHUB_ENV
-          echo "error_message_update_chart=Update Chart Failed" >> $GITHUB_ENV
-          echo "error_output_update_chart=No updates to chart"
-
-      - name: Notify
-        uses: actions/github-script@v4
-        with:
-          script: |
-            github.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: "notify-pipeline-status.yml",
-              ref: context.ref,
-              inputs: {
-                pipeline: "capstone-kali",
-                status_on_success_push: process.env.status_on_success_push,
-                status_on_success_update_chart: process.env.status_on_success_update_chart,
-                error_message_push: process.env.error_message_push,
-                error_output_push: process.env.error_output_push,
-                error_message_update_chart: process.env.error_message_update_chart,
-                error_output_update_chart: process.env.error_output_update_chart
-              }
-            });
+          curl -H "Content-Type: application/json" \
+          -d "{\"content\": \"Build failed for platforms: ${{ github.event.inputs.platforms }} with Git SHA: ${{ github.sha }}\"}" \
+          ${{ secrets.DISCORD_WEBHOOK }}
