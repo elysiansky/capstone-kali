@@ -1,7 +1,7 @@
 name: notify-pipeline-status
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       pipeline:
         required: true
