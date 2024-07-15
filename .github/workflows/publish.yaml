@@ -21,10 +21,14 @@ jobs:
           if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
             echo "DOCKER_USERNAME is not set"
             exit 1
+          else
+            echo "DOCKER_USERNAME is set"
           fi
           if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
             echo "DOCKER_PASSWORD is not set"
             exit 1
+          else
+            echo "DOCKER_PASSWORD is set"
           fi
 
       - name: Log in to DockerHub
@@ -43,13 +47,19 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ steps.set_tag.outputs.tag }}
 
-      - name: Notify on Success
-        if: ${{ success() }}
+      - name: Verify Discord Webhook Secret
         run: |
           if [ -z "${{ secrets.DISCORD_WEBHOOK }}" ]; then
             echo "DISCORD_WEBHOOK is not set"
             exit 1
+          else
+            echo "DISCORD_WEBHOOK is set"
           fi
+
+      - name: Notify on Success
+        if: ${{ success() }}
+        run: |
+          echo "Sending success notification to Discord"
           curl -H "Content-Type: application/json" \
           -d "{\"content\": \"Build succeeded for platforms with Git SHA\"}" \
           ${{ secrets.DISCORD_WEBHOOK }}
@@ -57,10 +67,8 @@ jobs:
       - name: Notify on Failure
         if: ${{ failure() }}
         run: |
-          if [ -z "${{ secrets.DISCORD_WEBHOOK }}" ]; then
-            echo "DISCORD_WEBHOOK is not set"
-            exit 1
-          fi
+          echo "Sending failure notification to Discord"
           curl -H "Content-Type: application/json" \
           -d "{\"content\": \"Build failed for platforms with Git SHA\"}" \
           ${{ secrets.DISCORD_WEBHOOK }}
+
