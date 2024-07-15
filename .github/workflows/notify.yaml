@@ -48,20 +48,21 @@ jobs:
               "content": "**[ STATUS MESSAGE ] The project ${{ inputs.pipeline }} successfully built and published!**",
               "embeds": [
                 {
-                  "title": "Project Repository URL",
-                  "url": "https://github.com/elysiansky/capstone-kali",
-                  "description": "https://github.com/elysiansky/capstone-kali",
-                  "image": {
-                    "url": "https://link-to-image-for-project-repository-url"
-                  }
-                },
-                {
-                  "title": "Project Chart URL",
-                  "url": "https://github.com/elysiansky/capstone-chart-kali",
-                  "description": "https://github.com/elysiansky/capstone-chart-kali",
-                  "image": {
-                    "url": "https://link-to-image-for-project-chart-url"
-                  }
+                  "title": "Project Details",
+                  "fields": [
+                    {
+                      "name": "Project Image Repository URL",
+                      "value": "${{ vars.PROJECT_IMAGE_REPOSITORY_URL }}"
+                    },
+                    {
+                      "name": "Project Repository URL",
+                      "value": "${{ vars.PROJECT_REPOSITORY_URL }}"
+                    },
+                    {
+                      "name": "Project Chart URL",
+                      "value": "${{ vars.PROJECT_CHART_URL }}"
+                    }
+                  ]
                 }
               ]
             }
