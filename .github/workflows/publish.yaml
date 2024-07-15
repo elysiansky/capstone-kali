@@ -60,7 +60,7 @@ jobs:
                 error_message_push: "",
                 error_output_push: "",
                 error_message_update_chart: "",
-                error_output_update_chart: "",
+                error_output_update_chart: ""
               }
             })
 
@@ -79,8 +79,8 @@ jobs:
                 status_on_success_push: "failure",
                 status_on_success_update_chart: "failure",
                 error_message_push: "Publish Docker Image Failed",
-                error_output_push: ${{ steps.publish.outcome }},
+                error_output_push: "${{ steps.publish.outcome }}",
                 error_message_update_chart: "",
-                error_output_update_chart: "",
+                error_output_update_chart: ""
               }
             })
