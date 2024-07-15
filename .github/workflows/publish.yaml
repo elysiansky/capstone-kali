@@ -20,11 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: development
     steps:
-      - name: Debug Outputs
-        run: |
-          echo "Platforms: ${{ github.event.inputs.platforms }}"
-          echo "Git SHA: ${{ github.event.inputs.git_sha }}"
-
       - name: Checkout Repository
         uses: actions/checkout@v2
 
@@ -60,9 +55,6 @@ jobs:
           ref: main
           token: ${{ secrets.HELM_CHART_PERSONAL_ACCESS_TOKEN }}
 
-      - name: Debug values.yaml Before Update
-        run: cat values.yaml
-
       - name: Update Helm Chart Values Image Tag
         run: |
           sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms }}/" values.yaml
@@ -72,7 +64,6 @@ jobs:
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
           git add values.yaml
-          git status
           if ! git diff --cached --quiet; then
             git commit -m "Update image tag with latest Git SHA"
             git push
