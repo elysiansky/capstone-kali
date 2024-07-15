@@ -44,8 +44,8 @@ jobs:
         with:
           context: .
           file: ./docker/Dockerfile
-          platforms: linux/amd64
-          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-linux-amd64
+          platforms: ${{ github.event.inputs.platforms }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/kali-linux:${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms }}
           push: true
 
   on-success-update-chart:
@@ -65,41 +65,32 @@ jobs:
 
       - name: Update Helm Chart Values Image Tag
         run: |
-          sed -i "s/\(tag: \).*/\1${{ github.event.inputs.git_sha }}-linux-amd64/" values.yaml
-          echo "After sed command:"
-          cat values.yaml
-
-      - name: Configure Git User Email
-        run: git config --global user.email "action@github.com"
-
-      - name: Configure Git User Name
-        run: git config --global user.name "GitHub Action"
-
-      - name: Add Changes
-        run: |
-          git add values.yaml
-          git status
-          git diff --cached
+          sed -i "s/tag:.*/tag: ${{ github.event.inputs.git_sha }}-${{ github.event.inputs.platforms }}/" values.yaml
 
       - name: Commit and Push Changes
         run: |
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git add values.yaml
+          git status
+          if ! git diff --cached --quiet; then
             git commit -m "Update image tag with latest Git SHA"
             git push
+          else
+            echo "No changes to commit"
           fi
 
   on-success-notify-discord:
     needs: on-success-update-chart
     runs-on: ubuntu-latest
+    environment: development
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
       - name: Debug DISCORD_WEBHOOK Secret
         run: |
-          echo "DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}"
+          echo "DISCORD_WEBHOOK: "
           if [ -z "${{ secrets.DISCORD_WEBHOOK }}" ]; then
             echo "DISCORD_WEBHOOK is not set"
             exit 1
@@ -110,5 +101,6 @@ jobs:
       - name: Send Notification to Discord
         run: |
           curl -H "Content-Type: application/json" \
-            -d "{\"content\": \"Build succeeded for platforms: ${{ github.event.inputs.platforms }} with Git SHA: ${{ github.event.inputs.git_sha }}\"}" \
-            ${{ secrets.DISCORD_WEBHOOK }}
+          -d "{\"content\": \"Build succeeded for platforms: ${{ github.event.inputs.platforms }} with Git SHA: ${{ github.event.inputs.git_sha }}\"}" \
+          ${{ secrets.DISCORD_WEBHOOK }}
+
