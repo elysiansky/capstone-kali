@@ -34,4 +34,5 @@ jobs:
           twine upload dist/*
 
   notify:
+    needs: publish
     uses: ./.github/workflows/notify.yaml
