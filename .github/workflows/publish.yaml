@@ -32,7 +32,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/my-kali-image:latest
 
       - name: Send Notification
-        uses: ./.github/workflows/notify.yaml
+        run: ./.github/workflows/notify.yaml
 
   notify:
     runs-on: ubuntu-latest
