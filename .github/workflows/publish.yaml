@@ -33,8 +33,37 @@ jobs:
           echo "Building and pushing Docker image with tag: $TAG"
           docker buildx build --file ./docker/Dockerfile --platform linux/amd64 --tag $TAG --push .
 
-  notify:
+  update-helm-chart:
     needs: build-and-publish
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - name: Checkout Helm Chart Repository
+        uses: actions/checkout@v2
+        with:
+          repository: elysiansky/capstone-chart-kali
+          ref: main
+          token: ${{ secrets.HELM_CHART_PERSONAL_ACCESS_TOKEN }}
+
+      - name: Update Helm Chart Values Image Tag
+        run: |
+          TAG="${{ secrets.DOCKER_USERNAME }}/my-kali-image:${{ env.TAG }}"
+          sed -i "s|tag: .*|tag: $TAG|" values.yaml
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git add values.yaml
+          if ! git diff --cached --quiet; then
+            git commit -m "Update image tag with new build"
+            git push
+          else
+            echo "No changes to commit"
+
+  notify:
+    needs: update-helm-chart
     runs-on: ubuntu-latest
     environment: development
 
@@ -47,5 +76,5 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
           curl -X POST -H "Content-Type: application/json" \
-          -d '{"content": "The Docker image has been successfully published with tag: ${{ env.TAG }}."}' \
+          -d '{"content": "The Docker image has been successfully published with tag: ${{ env.TAG }} and Helm chart updated."}' \
           $DISCORD_WEBHOOK
