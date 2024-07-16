@@ -31,17 +31,14 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/my-kali-image:latest
 
-      - name: Send Notification
-        run: ./.github/workflows/notify.yaml
-
   notify:
+    needs: build-and-publish
     runs-on: ubuntu-latest
 
     steps:
-      - name: Notify via Discord
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-          -d '{"content": "The Docker image has been successfully published."}' \
-          $DISCORD_WEBHOOK
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Run notification workflow
+        run: ./.github/workflows/notify.yaml
+
