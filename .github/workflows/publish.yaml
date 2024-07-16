@@ -8,6 +8,7 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    environment: development
 
     steps:
       - name: Checkout code
@@ -23,20 +24,21 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/my-kali-image:latest
+        run: |
+          TAG="${{ secrets.DOCKER_USERNAME }}/my-kali-image:latest"
+          echo "Building and pushing Docker image with tag: $TAG"
+          docker buildx build --file ./Dockerfile --platform linux/amd64 --tag $TAG --push .
 
   notify:
     needs: build-and-publish
     runs-on: ubuntu-latest
+    environment: development
 
     steps:
-      - name: Notify via Discord
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Send Notification to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
