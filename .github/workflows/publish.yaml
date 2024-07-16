@@ -27,7 +27,7 @@ jobs:
         run: |
           TAG="${{ secrets.DOCKER_USERNAME }}/my-kali-image:latest"
           echo "Building and pushing Docker image with tag: $TAG"
-          docker buildx build --file ./Dockerfile --platform linux/amd64 --tag $TAG --push .
+          docker buildx build --file ./docker/Dockerfile --platform linux/amd64 --tag $TAG --push .
 
   notify:
     needs: build-and-publish
