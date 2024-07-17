@@ -32,14 +32,3 @@ jobs:
         run: |
           python3 setup.py sdist bdist_wheel
           twine upload dist/*
-          
-      - name: Notify Pipeline Status
-        run: |
-          gh workflow run notify-pipeline-status.yml \
-            -f pipeline="My Project" \
-            -f status_on_success_push="success" \
-            -f status_on_success_update_chart="success" \
-            -f error_message_push="" \
-            -f error_output_push="" \
-            -f error_message_update_chart="" \
-            -f error_output_update_chart=""
