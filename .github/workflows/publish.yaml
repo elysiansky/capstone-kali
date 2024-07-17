@@ -36,7 +36,7 @@ jobs:
         continue-on-error: true
 
     outputs:
-      status: ${{ steps.build-and-push.outcome }}
+      status: ${{ steps.build-and-push.outcome || 'failure' }}
       error_message_push: ${{ steps.build-and-push.outcome == 'failure' && steps.build-and-push.outputs.error_message_push }}
       error_output_push: ${{ steps.build-and-push.outcome == 'failure' && steps.build-and-push.outputs.error_output_push }}
 
@@ -73,7 +73,7 @@ jobs:
           fi
 
     outputs:
-      status: ${{ steps.update-helm-chart.outcome }}
+      status: ${{ steps.update-helm-chart.outcome || 'failure' }}
       error_message_update_chart: ${{ steps.update-helm-chart.outcome == 'failure' && steps.update-helm-chart.outputs.error_message_update_chart }}
       error_output_update_chart: ${{ steps.update-helm-chart.outcome == 'failure' && steps.update-helm-chart.outputs.error_output_update_chart }}
 
@@ -82,10 +82,10 @@ jobs:
     uses: ./.github/workflows/notify.yaml
     with:
       pipeline: "My Project Pipeline"
-      status_on_success_push: ${{ needs.build-and-publish.outputs.status }}
-      status_on_success_update_chart: ${{ needs.update-helm-chart.outputs.status }}
-      error_message_push: ${{ needs.build-and-publish.outputs.error_message_push }}
-      error_output_push: ${{ needs.build-and-publish.outputs.error_output_push }}
-      error_message_update_chart: ${{ needs.update-helm-chart.outputs.error_message_update_chart }}
-      error_output_update_chart: ${{ needs.update-helm-chart.outputs.error_output_update_chart }}
+      status_on_success_push: ${{ needs.build-and-publish.outputs.status || 'failure' }}
+      status_on_success_update_chart: ${{ needs.update-helm-chart.outputs.status || 'failure' }}
+      error_message_push: ${{ needs.build-and-publish.outputs.error_message_push || '' }}
+      error_output_push: ${{ needs.build-and-publish.outputs.error_output_push || '' }}
+      error_message_update_chart: ${{ needs.update-helm-chart.outputs.error_message_update_chart || '' }}
+      error_output_update_chart: ${{ needs.update-helm-chart.outputs.error_output_update_chart || '' }}
     secrets: inherit
