@@ -38,48 +38,42 @@ jobs:
         if: ${{ inputs.status_on_success_push == 'success' && inputs.status_on_success_update_chart == 'success' }}
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        uses: Ilshidur/action-discord@master
-        with:
-          args: |
-            {
-              "content": "**[ STATUS MESSAGE ] The project ${{ inputs.pipeline }} successfully built and published!**",
-              "embeds": [
-                {
-                  "title": "Project Repository URL",
-                  "url": "https://github.com/elysiansky/capstone-kali",
-                  "description": "https://github.com/elysiansky/capstone-kali",
-                  "image": {
-                    "url": "https://link-to-image-for-project-repository-url"
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+                "content": "**[ STATUS MESSAGE ] The project ${{ inputs.pipeline }} successfully built and published!**",
+                "embeds": [
+                  {
+                    "title": "Project Repository URL",
+                    "url": "https://github.com/elysiansky/capstone-kali",
+                    "description": "https://github.com/elysiansky/capstone-kali"
+                  },
+                  {
+                    "title": "Project Chart URL",
+                    "url": "https://github.com/elysiansky/capstone-chart-kali",
+                    "description": "https://github.com/elysiansky/capstone-chart-kali"
                   }
-                },
-                {
-                  "title": "Project Chart URL",
-                  "url": "https://github.com/elysiansky/capstone-chart-kali",
-                  "description": "https://github.com/elysiansky/capstone-chart-kali",
-                  "image": {
-                    "url": "https://link-to-image-for-project-chart-url"
-                  }
-                }
-              ]
-            }
+                ]
+              }' \
+          $DISCORD_WEBHOOK
 
       - name: Send Discord notification on failure
-        if: ${{ inputs.status_on_success_push == 'failure' || inputs.status_on_success_update_chart == 'failure' }}
+        if: ${{ inputs.status_on_success_push != 'success' || inputs.status_on_success_update_chart != 'success' }}
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        uses: Ilshidur/action-discord@master
-        with:
-          args: |
-            {
-              "content": "**[ ERROR ] The project ${{ inputs.pipeline }} failed to build and publish:**",
-              "embeds": [
-                {
-                  "title": "Push Error",
-                  "description": "${{ inputs.error_message_push }}\n${{ inputs.error_output_push }}"
-                },
-                {
-                  "title": "Update Chart Error",
-                  "description": "${{ inputs.error_message_update_chart }}\n${{ inputs.error_output_update_chart }}"
-                }
-              ]
-            }
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+                "content": "**[ ERROR ] The project ${{ inputs.pipeline }} failed to build and publish:**",
+                "embeds": [
+                  {
+                    "title": "Push Error",
+                    "description": "${{ inputs.error_message_push }}\n${{ inputs.error_output_push }}"
+                  },
+                  {
+                    "title": "Update Chart Error",
+                    "description": "${{ inputs.error_message_update_chart }}\n${{ inputs.error_output_update_chart }}"
+                  }
+                ]
+              }' \
+          $DISCORD_WEBHOOK
