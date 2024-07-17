@@ -33,6 +33,11 @@ jobs:
           echo "Building and pushing Docker image with tag: $TAG"
           docker buildx build --file ./docker/Dockerfile --platform linux/amd64 --tag $TAG --push .
 
+    outputs:
+      status: ${{ steps.build-and-push.outcome }}
+      error_message_push: ${{ steps.build-and-push.outcome == 'failure' && steps.build-and-push.outputs.error_message_push }}
+      error_output_push: ${{ steps.build-and-push.outcome == 'failure' && steps.build-and-push.outputs.error_output_push }}
+
   update-helm-chart:
     needs: build-and-publish
     runs-on: ubuntu-latest
@@ -63,15 +68,20 @@ jobs:
             echo "No changes to commit"
           fi
 
+    outputs:
+      status: ${{ steps.update-helm-chart.outcome }}
+      error_message_update_chart: ${{ steps.update-helm-chart.outcome == 'failure' && steps.update-helm-chart.outputs.error_message_update_chart }}
+      error_output_update_chart: ${{ steps.update-helm-chart.outcome == 'failure' && steps.update-helm-chart.outputs.error_output_update_chart }}
+
   notify:
     needs: update-helm-chart
     uses: ./.github/workflows/notify.yaml
     with:
       pipeline: "My Project Pipeline"
-      status_on_success_push: ${{ needs.build-and-publish.result }}
-      status_on_success_update_chart: ${{ needs.update-helm-chart.result }}
-      error_message_push: ${{ job.status == 'failure' && needs.build-and-publish.outputs.error_message_push }}
-      error_output_push: ${{ job.status == 'failure' && needs.build-and-publish.outputs.error_output_push }}
-      error_message_update_chart: ${{ job.status == 'failure' && needs.update-helm-chart.outputs.error_message_update_chart }}
-      error_output_update_chart: ${{ job.status == 'failure' && needs.update-helm-chart.outputs.error_output_update_chart }}
+      status_on_success_push: ${{ needs.build-and-publish.outputs.status }}
+      status_on_success_update_chart: ${{ needs.update-helm-chart.outputs.status }}
+      error_message_push: ${{ needs.build-and-publish.outputs.error_message_push }}
+      error_output_push: ${{ needs.build-and-publish.outputs.error_output_push }}
+      error_message_update_chart: ${{ needs.update-helm-chart.outputs.error_message_update_chart }}
+      error_output_update_chart: ${{ needs.update-helm-chart.outputs.error_output_update_chart }}
     secrets: inherit
