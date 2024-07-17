@@ -28,10 +28,12 @@ jobs:
         run: echo "TAG=${RANDOM}-${RANDOM}-${RANDOM}" >> $GITHUB_ENV
 
       - name: Build and push Docker image
+        id: build-and-push
         run: |
           TAG="${{ secrets.DOCKER_USERNAME }}/my-kali-image:${{ env.TAG }}"
           echo "Building and pushing Docker image with tag: $TAG"
           docker buildx build --file ./docker/Dockerfile --platform linux/amd64 --tag $TAG --push .
+        continue-on-error: true
 
     outputs:
       status: ${{ steps.build-and-push.outcome }}
@@ -52,9 +54,11 @@ jobs:
           token: ${{ secrets.HELM_CHART_PERSONAL_ACCESS_TOKEN }}
 
       - name: Update Helm Chart Values Image Tag
+        id: update-helm-chart
         run: |
           TAG="${{ secrets.DOCKER_USERNAME }}/my-kali-image:${{ env.TAG }}"
           sed -i "s|tag: .*|tag: $TAG|" values.yaml
+        continue-on-error: true
 
       - name: Commit and Push Changes
         run: |
