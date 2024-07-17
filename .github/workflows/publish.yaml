@@ -37,8 +37,8 @@ jobs:
 
     outputs:
       status: ${{ steps.build-and-push.outcome || 'failure' }}
-      error_message_push: ${{ steps.build-and-push.outcome == 'failure' && steps.build-and-push.outputs.error_message_push }}
-      error_output_push: ${{ steps.build-and-push.outcome == 'failure' && steps.build-and-push.outputs.error_output_push }}
+      error_message_push: ${{ steps.build-and-push.outcome == 'failure' && steps.build-and-push.outputs.error_message_push || '' }}
+      error_output_push: ${{ steps.build-and-push.outcome == 'failure' && steps.build-and-push.outputs.error_output_push || '' }}
 
   update-helm-chart:
     needs: build-and-publish
@@ -74,8 +74,8 @@ jobs:
 
     outputs:
       status: ${{ steps.update-helm-chart.outcome || 'failure' }}
-      error_message_update_chart: ${{ steps.update-helm-chart.outcome == 'failure' && steps.update-helm-chart.outputs.error_message_update_chart }}
-      error_output_update_chart: ${{ steps.update-helm-chart.outcome == 'failure' && steps.update-helm-chart.outputs.error_output_update_chart }}
+      error_message_update_chart: ${{ steps.update-helm-chart.outcome == 'failure' && steps.update-helm-chart.outputs.error_message_update_chart || '' }}
+      error_output_update_chart: ${{ steps.update-helm-chart.outcome == 'failure' && steps.update-helm-chart.outputs.error_output_update_chart || '' }}
 
   notify:
     needs: update-helm-chart
