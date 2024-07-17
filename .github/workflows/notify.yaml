@@ -1,4 +1,4 @@
-name: Notify
+name: Notify Pipeline Status
 
 on:
   workflow_run:
@@ -16,14 +16,14 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Send Discord notification on success
-        if: ${{ inputs.status_on_success_push == 'success' && inputs.status_on_success_update_chart == 'success' }}
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         uses: Ilshidur/action-discord@master
         with:
           args: |
             {
-              "content": "**[ STATUS MESSAGE ] The project ${{ inputs.pipeline }} successfully built and published!**",
+              "content": "**[ STATUS MESSAGE ] The project successfully built and published!**",
               "embeds": [
                 {
                   "title": "Project Repository URL",
@@ -45,22 +45,22 @@ jobs:
             }
 
       - name: Send Discord notification on failure
-        if: ${{ inputs.status_on_success_push == 'failure' || inputs.status_on_success_update_chart == 'failure' }}
+        if: ${{ github.event.workflow_run.conclusion != 'success' }}
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         uses: Ilshidur/action-discord@master
         with:
           args: |
             {
-              "content": "**[ ERROR ] The project ${{ inputs.pipeline }} failed to build and publish:**",
+              "content": "**[ ERROR ] The project failed to build and publish:**",
               "embeds": [
                 {
                   "title": "Push Error",
-                  "description": "${{ inputs.error_message_push }}\n${{ inputs.error_output_push }}"
+                  "description": "An error occurred during the push process."
                 },
                 {
                   "title": "Update Chart Error",
-                  "description": "${{ inputs.error_message_update_chart }}\n${{ inputs.error_output_update_chart }}"
+                  "description": "An error occurred while updating the chart."
                 }
               ]
             }
