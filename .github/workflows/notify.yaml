@@ -31,6 +31,16 @@ jobs:
     environment: development
 
     steps:
+      - name: Print debug information
+        run: |
+          echo "Pipeline: ${{ inputs.pipeline }}"
+          echo "Status on Success Push: ${{ inputs.status_on_success_push }}"
+          echo "Status on Success Update Chart: ${{ inputs.status_on_success_update_chart }}"
+          echo "Error Message Push: ${{ inputs.error_message_push }}"
+          echo "Error Output Push: ${{ inputs.error_output_push }}"
+          echo "Error Message Update Chart: ${{ inputs.error_message_update_chart }}"
+          echo "Error Output Update Chart: ${{ inputs.error_output_update_chart }}"
+
       - name: Checkout Repository
         uses: actions/checkout@v2
 
