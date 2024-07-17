@@ -31,6 +31,9 @@ jobs:
     environment: development
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
       - name: Print debug information
         run: |
           echo "Pipeline: ${{ inputs.pipeline }}"
@@ -40,9 +43,6 @@ jobs:
           echo "Error Output Push: ${{ inputs.error_output_push }}"
           echo "Error Message Update Chart: ${{ inputs.error_message_update_chart }}"
           echo "Error Output Update Chart: ${{ inputs.error_output_update_chart }}"
-
-      - name: Checkout Repository
-        uses: actions/checkout@v2
 
       - name: Send Discord notification on success
         if: ${{ inputs.status_on_success_push == 'success' && inputs.status_on_success_update_chart == 'success' }}
