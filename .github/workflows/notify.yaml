@@ -1,29 +1,10 @@
-name: notify-pipeline-status
+name: Notify
 
 on:
-  workflow_dispatch:
-    inputs:
-      pipeline:
-        required: true
-        type: string
-      status_on_success_push:
-        required: true
-        type: string
-      status_on_success_update_chart:
-        required: true
-        type: string
-      error_message_push:
-        required: true
-        type: string
-      error_output_push:
-        required: true
-        type: string
-      error_message_update_chart:
-        required: true
-        type: string
-      error_output_update_chart:
-        required: true
-        type: string
+  workflow_run:
+    workflows: ["Publish"]
+    types:
+      - completed
 
 jobs:
   notify:
