@@ -1,4 +1,4 @@
-name: Publish Kali Image
+name: Publish Docker Image
 
 on:
   push:
@@ -68,10 +68,10 @@ jobs:
     uses: ./.github/workflows/notify.yaml
     with:
       pipeline: "My Project Pipeline"
-      status_on_success_push: ${{ job.status }}
-      status_on_success_update_chart: ${{ job.status }}
-      error_message_push: ""
-      error_output_push: ""
-      error_message_update_chart: ""
-      error_output_update_chart: ""
+      status_on_success_push: ${{ needs.build-and-publish.result }}
+      status_on_success_update_chart: ${{ needs.update-helm-chart.result }}
+      error_message_push: ${{ job.status == 'failure' && needs.build-and-publish.outputs.error_message_push }}
+      error_output_push: ${{ job.status == 'failure' && needs.build-and-publish.outputs.error_output_push }}
+      error_message_update_chart: ${{ job.status == 'failure' && needs.update-helm-chart.outputs.error_message_update_chart }}
+      error_output_update_chart: ${{ job.status == 'failure' && needs.update-helm-chart.outputs.error_output_update_chart }}
     secrets: inherit
