@@ -1,4 +1,4 @@
-name: Publish Docker Image
+name: Publish Kali Image
 
 on:
   push:
@@ -66,4 +66,12 @@ jobs:
   notify:
     needs: update-helm-chart
     uses: ./.github/workflows/notify.yaml
+    with:
+      pipeline: "My Project Pipeline"
+      status_on_success_push: ${{ job.status }}
+      status_on_success_update_chart: ${{ job.status }}
+      error_message_push: ""
+      error_output_push: ""
+      error_message_update_chart: ""
+      error_output_update_chart: ""
     secrets: inherit
