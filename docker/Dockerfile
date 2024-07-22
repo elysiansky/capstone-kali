@@ -10,7 +10,14 @@ RUN apt-get update && apt-get install -y \
     wget \
     git \
     openssh-server \
-    apache2
+    apache2 \
+    perl \
+    nmap
+
+# Install Nikto
+RUN git clone https://github.com/sullo/nikto.git /opt/nikto && \
+    ln -s /opt/nikto/program/nikto.pl /usr/local/bin/nikto && \
+    chmod +x /usr/local/bin/nikto
 
 # Set up a non-root user
 RUN useradd -m kaliuser && echo "kaliuser:kali" | chpasswd && adduser kaliuser sudo
